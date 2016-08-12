@@ -1,5 +1,7 @@
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.*;
+import org.apache.hadoop.hbase.HColumnDescriptor;
+import org.apache.hadoop.hbase.HTableDescriptor;
+import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
@@ -13,16 +15,20 @@ import java.util.List;
  */
 public class HBaseOperation {
     private Configuration config;
-    private HBaseAdmin admin;
+    private Admin admin;
+    private Connection conn;
 
     public HBaseOperation() {
     }
 
-    public HBaseOperation(Configuration config)
-            throws MasterNotRunningException, ZooKeeperConnectionException,
-            IOException {
-        this.config = config;
-        this.admin = new HBaseAdmin(config);
+    public HBaseOperation(Configuration conf) {
+        try {
+            config = conf;
+            conn = ConnectionFactory.createConnection(config);
+            admin = conn.getAdmin();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     /**
@@ -31,22 +37,23 @@ public class HBaseOperation {
      * @param tableName   表名
      * @param colFamilies 列族名
      */
-    public void createTable(String tableName, String[] colFamilies)
-            throws IOException {
-
-        HTableDescriptor desc = new HTableDescriptor(
-                TableName.valueOf(tableName));
-        for (int i = 0; i < colFamilies.length; i++) {
-            desc.addFamily(new HColumnDescriptor(colFamilies[i]));
+    public void createTable(String tableName, String[] colFamilies) throws IOException {
+        try {
+            HTableDescriptor tableDes = new HTableDescriptor(TableName.valueOf(tableName));
+            for (int i = 0; i < colFamilies.length; i++) {
+                tableDes.addFamily(new HColumnDescriptor(colFamilies[i]));
+            }
+            TableName table = TableName.valueOf(tableName);
+            if (admin.tableExists(table)) {
+                System.out.println("table exists!");
+                System.exit(0);
+            } else {
+                admin.createTable(tableDes);
+                System.out.println("create table success!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        if (this.admin.tableExists(tableName)) {
-            System.out.println("table exists!");
-            System.exit(0);
-        } else {
-            this.admin.createTable(desc);
-            System.out.println("create table success!");
-        }
-
     }
 
     /**
@@ -54,12 +61,17 @@ public class HBaseOperation {
      *
      * @param tableName 表名
      */
-    public void deleteTable(String tableName) throws IOException {
-        if (this.admin.tableExists(tableName)) {
-            admin.deleteTable(tableName);
-            System.out.println("delete table success!");
-        } else {
-            System.out.println("table not exists!");
+    public void deleteTable(String tableName) {
+        try {
+            TableName table = TableName.valueOf(tableName);
+            if (admin.tableExists(table)) {
+                admin.deleteTable(table);
+                System.out.println("delete table success!");
+            } else {
+                System.out.println("table not exists!");
+            }
+        } catch (Exception e) {
+            e.printStackTrace();
         }
     }
 
@@ -70,15 +82,22 @@ public class HBaseOperation {
      * @param qualifier 列名
      * @param value     列的值
      */
-    public void insertRecord(String tableName, String rowkey, String family,
-                             String qualifier, String value) throws IOException {
-        HTable table = new HTable(config, tableName);// HTabel负责跟记录相关的操作如增删改查等
-        Put put = new Put(Bytes.toBytes(rowkey));// 设置rowkey
-        put.add(Bytes.toBytes(family), Bytes.toBytes(qualifier),
-                Bytes.toBytes(value));// 将指定的列族中的某一列以及该列的值添加到put实例中
-        table.put(put);
-        System.out.println("insert record success！");
-        table.close();
+    public void insertRecord(String tableName, String rowkey, String family, String qualifier, String value) throws IOException {
+        Table table = conn.getTable(TableName.valueOf(tableName));
+        try {
+            // Tabel负责跟记录相关的操作如增删改查等
+            Put put = new Put(Bytes.toBytes(rowkey));
+            // 将指定的列族中的某一列以及该列的值添加到put实例中
+            put.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier), Bytes.toBytes(value));
+            table.put(put);
+            System.out.println("insert record success！");
+            table.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            table.close();
+        }
+
     }
 
     /**
@@ -86,15 +105,18 @@ public class HBaseOperation {
      *
      * @param tableName 表名
      * @param rowkey    行键
-     * @return
+     * @return 查询结果
      */
-    public Result getRecord(String tableName, String rowkey) throws IOException {
-        HTable table = new HTable(config, tableName);
-
-        Get get = new Get(Bytes.toBytes(rowkey));
-        Result result = table.get(get);
-
-        table.close();
+    public Result getRecord(String tableName, String rowkey) {
+        Result result = null;
+        try {
+            Table table = conn.getTable(TableName.valueOf(tableName));
+            Get get = new Get(Bytes.toBytes(rowkey));
+            result = table.get(get);
+            table.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return result;
     }
 
@@ -106,15 +128,17 @@ public class HBaseOperation {
      * @param family    列族名
      * @param qualifier 列名
      */
-    public Result getRecordByColumn(String tableName, String rowkey,
-                                    String family, String qualifier) throws IOException {
-        HTable table = new HTable(config, tableName);
-
-        Get get = new Get(Bytes.toBytes(rowkey));
-        get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
-        Result result = table.get(get);
-
-        table.close();
+    public Result getRecordByColumn(String tableName, String rowkey, String family, String qualifier) {
+        Result result = null;
+        try {
+            Table table = conn.getTable(TableName.valueOf(tableName));
+            Get get = new Get(Bytes.toBytes(rowkey));
+            get.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
+            result = table.get(get);
+            table.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
         return result;
     }
 
@@ -123,15 +147,19 @@ public class HBaseOperation {
      *
      * @param tableName 表名
      */
-    public List<Result> getAllRecord(String tableName) throws IOException {
-        HTable table = new HTable(config, tableName);
-        Scan scan = new Scan();
-        ResultScanner scanner = table.getScanner(scan);
+    public List<Result> getAllRecord(String tableName) {
         List<Result> list = new ArrayList<Result>();
-        for (Result result : scanner) {
-            list.add(result);
+        try {
+            Table table = conn.getTable(TableName.valueOf(tableName));
+            Scan scan = new Scan();
+            ResultScanner scanner = table.getScanner(scan);
+            for (Result result : scanner) {
+                list.add(result);
+            }
+            table.close();
+        } catch (Exception e) {
+            e.printStackTrace();
         }
-        table.close();
         return list;
     }
 
@@ -141,25 +169,31 @@ public class HBaseOperation {
      * @param tableName 表名
      * @param rowkey    行键
      */
-    public void deleteRow(String tableName, String rowkey) throws IOException {
-        HTable table = new HTable(config, tableName);
+    public void deleteRow(String tableName, String rowkey) {
+        try {
+            Table table = conn.getTable(TableName.valueOf(tableName));
+            Delete delete = new Delete(Bytes.toBytes(rowkey));
+            table.delete(delete);
+            System.out.println("row are deleted!");
+            table.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        Delete delete = new Delete(Bytes.toBytes(rowkey));
-        table.delete(delete);
-
-        System.out.println("row are deleted!");
-        table.close();
     }
 
-    public void deleteColumn(String tableName, String rowkey, String family,
-                             String qualifier) throws IOException {
-        HTable table = new HTable(config, tableName);
+    public void deleteColumn(String tableName, String rowkey, String family, String qualifier) {
+        try {
+            Table table = conn.getTable(TableName.valueOf(tableName));
+            Delete delete = new Delete(Bytes.toBytes(rowkey));
+            delete.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
+            table.delete(delete);
+            System.out.println("clomun are deleted！");
+            table.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
 
-        Delete delete = new Delete(Bytes.toBytes(rowkey));
-        delete.deleteColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier));
-        table.delete(delete);
 
-        System.out.println("clomun are deleted！");
-        table.close();
     }
 }
