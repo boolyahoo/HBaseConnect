@@ -23,7 +23,7 @@ public class Main {
         // 2.1 创建表
         String tableName = "blog";
         String colFamilies[] = {"article", "author"};
-        hbase.createTable(tableName, colFamilies);
+        //hbase.createTable(tableName, colFamilies);
 
         // 2.2 插入一条记录
         hbase.insertRecord(tableName, "row1", "article", "title", "hadoop");
