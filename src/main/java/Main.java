@@ -1,10 +1,8 @@
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.fs.Path;
-import org.apache.hadoop.hbase.*;
-import org.apache.hadoop.hbase.client.Admin;
-import org.apache.hadoop.hbase.client.Connection;
-import org.apache.hadoop.hbase.client.ConnectionFactory;
-import org.apache.hadoop.hbase.io.compress.Compression.Algorithm;
+import org.apache.hadoop.hbase.HBaseConfiguration;
+import org.apache.hadoop.hbase.TableName;
+import org.apache.hadoop.hbase.client.*;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.IOException;
 
@@ -13,76 +11,39 @@ import java.io.IOException;
  * Created by xcoder on 8/12/16.
  */
 public class Main {
-    private static final String TABLE_NAME = "MY_TABLE_NAME_TOO";
-    private static final String CF_DEFAULT = "DEFAULT_COLUMN_FAMILY";
 
     public static void main(String... args) throws IOException {
         Configuration config = HBaseConfiguration.create();
-        //Add any necessary configuration files (hbase-site.xml, core-site.xml)
-        config.addResource(new Path(System.getenv("HBASE_CONF_DIR"), "hbase-site.xml"));
-        config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
-        createSchemaTables(config);
-        modifySchema(config);
-    }
-
-    public static void createOrOverwrite(Admin admin, HTableDescriptor table) throws IOException {
-        if (admin.tableExists(table.getTableName())) {
-            admin.disableTable(table.getTableName());
-            admin.deleteTable(table.getTableName());
-        }
-        admin.createTable(table);
-    }
-
-    public static void createSchemaTables(Configuration config) throws IOException {
+        Connection connection = ConnectionFactory.createConnection(config);
         try {
-            Connection connection = ConnectionFactory.createConnection(config);
-            Admin admin = connection.getAdmin();
-            HTableDescriptor table = new HTableDescriptor(TableName.valueOf(TABLE_NAME));
-            table.addFamily(new HColumnDescriptor(CF_DEFAULT).setCompressionType(Algorithm.SNAPPY));
 
-            System.out.print("Creating table. ");
-            createOrOverwrite(admin, table);
-            System.out.println(" Done.");
-        } catch (Exception e) {
-            e.printStackTrace();
-        }
-    }
-
-    public static void modifySchema(Configuration config) throws IOException {
-        try {
-            Connection connection = ConnectionFactory.createConnection(config);
-            Admin admin = connection.getAdmin();
-            TableName tableName = TableName.valueOf(TABLE_NAME);
-            if (!admin.tableExists(tableName)) {
-                System.out.println("Table does not exist.");
-                System.exit(-1);
+            Table table = connection.getTable(TableName.valueOf("test"));
+            try {
+                Put p = new Put(Bytes.toBytes("myLittleRow"));
+                //p.add(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"), Bytes.toBytes("Some Value"));
+                p.addColumn(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"), Bytes.toBytes("Some Value"));
+                table.put(p);
+                Get g = new Get(Bytes.toBytes("myLittleRow"));
+                Result r = table.get(g);
+                byte[] value = r.getValue(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"));
+                String valueStr = Bytes.toString(value);
+                System.out.println("GET: " + valueStr);
+                Scan s = new Scan();
+                s.addColumn(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"));
+                ResultScanner scanner = table.getScanner(s);
+                try {
+                    for (Result rr = scanner.next(); rr != null; rr = scanner.next()) {
+                        // print out the row we found and the columns we were looking for
+                        System.out.println("Found row: " + rr);
+                    }
+                } finally {
+                    scanner.close();
+                }
+            } finally {
+                if (table != null) table.close();
             }
-
-            HTableDescriptor table = new HTableDescriptor(tableName);
-
-            // Update existing table
-            HColumnDescriptor newColumn = new HColumnDescriptor("NEWCF");
-            newColumn.setCompactionCompressionType(Algorithm.GZ);
-            newColumn.setMaxVersions(HConstants.ALL_VERSIONS);
-            admin.addColumn(tableName, newColumn);
-
-            // Update existing column family
-            HColumnDescriptor existingColumn = new HColumnDescriptor(CF_DEFAULT);
-            existingColumn.setCompactionCompressionType(Algorithm.GZ);
-            existingColumn.setMaxVersions(HConstants.ALL_VERSIONS);
-            table.modifyFamily(existingColumn);
-            admin.modifyTable(tableName, table);
-
-            // Disable an existing table
-            admin.disableTable(tableName);
-
-            // Delete an existing column family
-            admin.deleteColumn(tableName, CF_DEFAULT.getBytes("UTF-8"));
-
-            // Delete a table (Need to be disabled first)
-            admin.deleteTable(tableName);
-        } catch (Exception e) {
-            e.printStackTrace();
+        } finally {
+            connection.close();
         }
     }
 
