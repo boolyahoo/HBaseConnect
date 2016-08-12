@@ -1,10 +1,10 @@
 import org.apache.hadoop.conf.Configuration;
-import org.apache.hadoop.hbase.HBaseConfiguration;
-import org.apache.hadoop.hbase.TableName;
-import org.apache.hadoop.hbase.client.*;
-import org.apache.hadoop.hbase.util.Bytes;
+import org.apache.hadoop.hbase.Cell;
+import org.apache.hadoop.hbase.client.Result;
 
 import java.io.IOException;
+import java.util.Iterator;
+import java.util.List;
 
 
 /**
@@ -13,38 +13,50 @@ import java.io.IOException;
 public class Main {
 
     public static void main(String... args) throws IOException {
-        Configuration config = HBaseConfiguration.create();
-        Connection connection = ConnectionFactory.createConnection(config);
-        try {
+        // 1.初始化HBaseOperation
+        Configuration config = new Configuration();
+        config.set("hbase.zookeeper.quorum", "H01,H02,H03");
+        config.set("hbase.zookeeper.property.clientPort", "2181");
+        HBaseOperation hbase = new HBaseOperation(config);
 
-            Table table = connection.getTable(TableName.valueOf("test"));
-            try {
-                Put p = new Put(Bytes.toBytes("myLittleRow"));
-                //p.add(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"), Bytes.toBytes("Some Value"));
-                p.addColumn(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"), Bytes.toBytes("Some Value"));
-                table.put(p);
-                Get g = new Get(Bytes.toBytes("myLittleRow"));
-                Result r = table.get(g);
-                byte[] value = r.getValue(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"));
-                String valueStr = Bytes.toString(value);
-                System.out.println("GET: " + valueStr);
-                Scan s = new Scan();
-                s.addColumn(Bytes.toBytes("myLittleFamily"), Bytes.toBytes("someQualifier"));
-                ResultScanner scanner = table.getScanner(s);
-                try {
-                    for (Result rr = scanner.next(); rr != null; rr = scanner.next()) {
-                        // print out the row we found and the columns we were looking for
-                        System.out.println("Found row: " + rr);
-                    }
-                } finally {
-                    scanner.close();
-                }
-            } finally {
-                if (table != null) table.close();
-            }
-        } finally {
-            connection.close();
+        // 2. 测试相应操作
+        // 2.1 创建表
+        String tableName = "blog";
+        String colFamilies[] = {"article", "author"};
+        hbase.createTable(tableName, colFamilies);
+
+        // 2.2 插入一条记录
+        hbase.insertRecord(tableName, "row1", "article", "title", "hadoop");
+        hbase.insertRecord(tableName, "row1", "author", "name", "tom");
+        hbase.insertRecord(tableName, "row1", "author", "nickname", "tt");
+
+        // 2.2 查询一条记录
+        Result rs1 = hbase.getRecord(tableName, "row1");
+        for (Cell cell : rs1.rawCells()) {
+            System.out.println(new String(cell.getRowArray()));
+            System.out.println(new String(cell.getFamilyArray()));
+            System.out.println(new String(cell.getQualifierArray()));
+            System.out.println(new String(cell.getValueArray()));
         }
+
+        // 2.3 查询所有记录
+        List<Result> list = hbase.getAllRecord(tableName);
+        Iterator<Result> it = list.iterator();
+        while (it.hasNext()) {
+            Result rs2 = it.next();
+            for (Cell cell : rs2.rawCells()) {
+                System.out.println("row key is : "
+                        + new String(cell.getRowArray()));
+                System.out.println("family is  : "
+                        + new String(cell.getFamilyArray()));
+                System.out.println("qualifier is:"
+                        + new String(cell.getQualifierArray()));
+                System.out.print("timestamp is:" + cell.getTimestamp());
+                System.out.println("Value  is  : "
+                        + new String(cell.getValueArray()));
+            }
+        }
+
     }
 
 
