@@ -18,9 +18,6 @@ public class HBaseOperation {
     private Admin admin;
     private Connection conn;
 
-    public HBaseOperation() {
-    }
-
     public HBaseOperation(Configuration conf) {
         try {
             config = conf;
@@ -82,22 +79,19 @@ public class HBaseOperation {
      * @param qualifier 列名
      * @param value     列的值
      */
-    public void insertRecord(String tableName, String rowkey, String family, String qualifier, String value) throws IOException {
-        Table table = conn.getTable(TableName.valueOf(tableName));
+    public void insertRecord(String tableName, String rowkey, String family, String qualifier, byte[] value) throws IOException {
         try {
+            Table table = conn.getTable(TableName.valueOf(tableName));
             // Tabel负责跟记录相关的操作如增删改查等
             Put put = new Put(Bytes.toBytes(rowkey));
             // 将指定的列族中的某一列以及该列的值添加到put实例中
-            put.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier), Bytes.toBytes(value));
+            put.addColumn(Bytes.toBytes(family), Bytes.toBytes(qualifier), value);
             table.put(put);
             System.out.println("insert record success！");
             table.close();
         } catch (Exception e) {
             e.printStackTrace();
-        } finally {
-            table.close();
         }
-
     }
 
     /**
@@ -193,7 +187,5 @@ public class HBaseOperation {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
-
     }
 }

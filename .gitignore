@@ -1,4 +1,7 @@
-/out
+out/
 *.iml
 .idea/
 target/
+*.bin
+#src/main/resources/
+src/test/
