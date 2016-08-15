@@ -20,35 +20,19 @@ public class Main {
         config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
         hbase = new HBaseOperation(config);
 
-        String tableName = "dictionary";
+        String tableName = "model";
         String colFamilies[] = {"data"};
         hbase.createTable(tableName, colFamilies);
 
         Map<String, String> dic = new HashMap<String, String>();
-        dic.put("core:data/dictionary/core/CoreNatureDictionary.ngram.txt", "ngramNature");
-        dic.put("core:data/dictionary/core/CoreNatureDictionary.txt", "coreNature");
-        dic.put("organization:data/dictionary/organization/nt.txt", "nt");
-        dic.put("other:data/dictionary/other/CharTable.txt", "charTable");
-        dic.put("other:data/dictionary/other/CharType.dat.yes", "charType");
-        dic.put("person:data/dictionary/person/nr.txt", "nr");
-        dic.put("person:data/dictionary/person/nrf.txt", "nrf");
-        dic.put("person:data/dictionary/person/nrj.txt", "nrj");
-        dic.put("pinyin:data/dictionary/pinyin/pinyin.txt", "pinyin");
-        dic.put("pinyin:data/dictionary/pinyin/SYTDictionary.txt", "sytDictionary");
-        dic.put("place:data/dictionary/place/ns.txt", "ns");
-        dic.put("stopwords:data/dictionary/stopwords/stopwords.txt", "stopwords");
-        dic.put("synonym:data/dictionary/synonym/CoreSynonym.txt", "coreSynonym");
-        dic.put("tc:data/dictionary/tc/TraditionalChinese.txt", "traditionalChinese");
+        dic.put("CRFDependency:data/model/dependency/CRFDependencyModelMini.txt.bin", "dependency");
+        dic.put("MaxEnt:data/model/dependency/MaxEntModel.txt.bin", "dependency");
+        dic.put("NNParser:data/model/dependency/NNParserModel.txt.bin", "dependency");
+        dic.put("WordNature:data/model/dependency/WordNature.txt.bin", "dependency");
+        dic.put("CRFSegment:data/model/segment/CRFSegmentModel.txt.bin", "segment");
+        dic.put("HMMSegment:data/model/segment/HMMSegmentModel.bin", "segment");
 
         loadDicIntoHBase(dic);
-
-
-
-       /* hbase.insertRecord(tableName, "row2", "article", "title", "hadoop");
-        hbase.insertRecord(tableName, "row2", "author", "name", "tom");
-        hbase.insertRecord(tableName, "row2", "author", "nickname", "tt");*/
-
-
     }
 
     private static void loadDicIntoHBase(Map dic) {
@@ -65,15 +49,11 @@ public class Main {
                 data = new byte[(int) file.length()];
                 int len = in.read(data);
                 in.close();
+                System.out.println(rowKey + ":" + column);
                 hbase.insertRecord(tableName, rowKey, columnFamily, column, data);
             } catch (Exception e) {
                 e.printStackTrace();
             }
-
-
-            //System.out.println(column);
-
-
         }
     }
 
