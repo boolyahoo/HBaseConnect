@@ -5,7 +5,6 @@ import org.apache.hadoop.hbase.TableName;
 import org.apache.hadoop.hbase.client.*;
 import org.apache.hadoop.hbase.util.Bytes;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -34,7 +33,7 @@ public class HBaseOperation {
      * @param tableName   表名
      * @param colFamilies 列族名
      */
-    public void createTable(String tableName, String[] colFamilies) throws IOException {
+    public void createTable(String tableName, String[] colFamilies) {
         try {
             HTableDescriptor tableDes = new HTableDescriptor(TableName.valueOf(tableName));
             for (int i = 0; i < colFamilies.length; i++) {
@@ -43,7 +42,6 @@ public class HBaseOperation {
             TableName table = TableName.valueOf(tableName);
             if (admin.tableExists(table)) {
                 System.out.println("table exists!");
-                System.exit(0);
             } else {
                 admin.createTable(tableDes);
                 System.out.println("create table success!");
@@ -79,7 +77,7 @@ public class HBaseOperation {
      * @param qualifier 列名
      * @param value     列的值
      */
-    public void insertRecord(String tableName, String rowkey, String family, String qualifier, byte[] value) throws IOException {
+    public void insertRecord(String tableName, String rowkey, String family, String qualifier, byte[] value) {
         try {
             Table table = conn.getTable(TableName.valueOf(tableName));
             // Tabel负责跟记录相关的操作如增删改查等
