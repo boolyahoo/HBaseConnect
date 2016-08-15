@@ -37,7 +37,7 @@ public class Main {
 
     private static void loadDicIntoHBase(Map dic) {
         byte[] data;
-        String tableName = "dictionary";
+        String tableName = "model";
         String columnFamily = "data";
         for (Object key : dic.keySet()) {
             String rowKey = ((String) key).split(":")[0];
