@@ -1,23 +1,30 @@
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.Path;
+import org.apache.hadoop.hbase.client.Result;
+import org.apache.hadoop.hbase.util.Bytes;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.logging.Level;
+import java.util.logging.Logger;
 
 /**
  * Created by xcoder on 8/16/16.
  */
 public class HBaseClient {
     private static HBaseOperation hbase;
+    private static Logger LOG;
 
     static {
         Configuration config = new Configuration();
         config.addResource(new Path(System.getenv("HBASE_CONF_DIR"), "hbase-site.xml"));
         config.addResource(new Path(System.getenv("HADOOP_CONF_DIR"), "core-site.xml"));
         hbase = new HBaseOperation(config);
+        LOG = Logger.getLogger(HBaseClient.class.getName());
+        LOG.setLevel(Level.INFO);
     }
 
     public void insertModdel() {
@@ -51,5 +58,17 @@ public class HBaseClient {
                 e.printStackTrace();
             }
         }
+    }
+
+    public void readModel() {
+        String tableName = "model";
+        String rowKey = "HMMSegment";
+        String colFamily = "data";
+        String column = "segment";
+        Result result = hbase.getRecordByColumn(tableName, rowKey, colFamily, column);
+        byte[] data = result.getValue(Bytes.toBytes(colFamily), Bytes.toBytes(column));
+
+
+
     }
 }
