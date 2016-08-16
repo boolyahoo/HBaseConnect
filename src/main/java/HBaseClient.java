@@ -28,11 +28,26 @@ public class HBaseClient {
     }
 
     public void insertModdel() {
-        String tableName = "model";
+        String tableName = "dictionary";
         String colFamilies[] = {"data"};
         hbase.createTable(tableName, colFamilies);
 
         Map<String, String> dic = new HashMap<String, String>();
+        dic.put("core:data/dictionary/core/CoreNatureDictionary.ngram.txt", "ngramNature");
+        dic.put("core:data/dictionary/core/CoreNatureDictionary.txt", "coreNature");
+        dic.put("organization:data/dictionary/organization/nt.txt", "organization");
+        dic.put("other:data/dictionary/other/CharTable.txt", "charTable");
+        dic.put("other:data/dictionary/other/CharType.dat.yes", "charType");
+        dic.put("person:data/dictionary/person/nr.txt", "person");
+        dic.put("person:data/dictionary/person/nrf.txt", "personf");
+        dic.put("person:data/dictionary/person/nrj.txt", "personj");
+        dic.put("pinyin:data/dictionary/pinyin/pinyin.txt", "pinyin");
+        dic.put("pinyin:data/dictionary/pinyin/SYTDictionary.txt", "SYTDictionary");
+        dic.put("place:data/dictionary/place/ns.txt", "place");
+        dic.put("stopwords:data/dictionary/stopwords/stopwords.txt", "stopwords");
+        dic.put("synonym:data/dictionary/synonym/CoreSynonym.txt", "coreSynonym");
+        dic.put("traditionalChinese:data/dictionary/tc/TraditionalChinese.txt", "traditionalChinese");
+
         dic.put("CRFDependency:data/model/dependency/CRFDependencyModelMini.txt.bin", "dependency");
         dic.put("MaxEnt:data/model/dependency/MaxEntModel.txt.bin", "dependency");
         dic.put("NNParser:data/model/dependency/NNParserModel.txt.bin", "dependency");
@@ -54,8 +69,7 @@ public class HBaseClient {
                 System.out.println(rowKey + ":" + column);
                 hbase.insertRecord(tableName, rowKey, colFamilies[0], column, data);
             } catch (Exception e) {
-                System.out.println(new Date(System.currentTimeMillis()));
-                e.printStackTrace();
+                LOG.info(e.getMessage());
             }
         }
     }
