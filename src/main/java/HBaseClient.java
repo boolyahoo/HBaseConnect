@@ -33,27 +33,27 @@ public class HBaseClient {
         hbase.createTable(tableName, colFamilies);
 
         Map<String, String> dic = new HashMap<String, String>();
-        dic.put("core:data/dictionary/core/CoreNatureDictionary.ngram.txt", "ngramNature");
-        dic.put("core:data/dictionary/core/CoreNatureDictionary.txt", "coreNature");
+        /*dic.put("ngramNature:data/dictionary/core/CoreNatureDictionary.ngram.txt", "ngramNature");
+        dic.put("coreNature:data/dictionary/core/CoreNatureDictionary.txt", "coreNature");
         dic.put("organization:data/dictionary/organization/nt.txt", "organization");
-        dic.put("other:data/dictionary/other/CharTable.txt", "charTable");
-        dic.put("other:data/dictionary/other/CharType.dat.yes", "charType");
+        dic.put("charTable:data/dictionary/other/CharTable.txt", "charTable");
+        dic.put("charType:data/dictionary/other/CharType.dat.yes", "charType");
         dic.put("person:data/dictionary/person/nr.txt", "person");
-        dic.put("person:data/dictionary/person/nrf.txt", "personf");
-        dic.put("person:data/dictionary/person/nrj.txt", "personj");
+        dic.put("personf:data/dictionary/person/nrf.txt", "personf");
+        dic.put("personj:data/dictionary/person/nrj.txt", "personj");
         dic.put("pinyin:data/dictionary/pinyin/pinyin.txt", "pinyin");
-        dic.put("pinyin:data/dictionary/pinyin/SYTDictionary.txt", "SYTDictionary");
+        dic.put("SYTDictionary:data/dictionary/pinyin/SYTDictionary.txt", "SYTDictionary");
         dic.put("place:data/dictionary/place/ns.txt", "place");
         dic.put("stopwords:data/dictionary/stopwords/stopwords.txt", "stopwords");
-        dic.put("synonym:data/dictionary/synonym/CoreSynonym.txt", "coreSynonym");
-        dic.put("traditionalChinese:data/dictionary/tc/TraditionalChinese.txt", "traditionalChinese");
+        dic.put("synonym:data/dictionary/synonym/CoreSynonym.txt", "synonym");
+        dic.put("traditionalChinese:data/dictionary/tc/TraditionalChinese.txt", "traditionalChinese");*/
 
-        dic.put("CRFDependency:data/model/dependency/CRFDependencyModelMini.txt.bin", "dependency");
-        dic.put("MaxEnt:data/model/dependency/MaxEntModel.txt.bin", "dependency");
-        dic.put("NNParser:data/model/dependency/NNParserModel.txt.bin", "dependency");
-        dic.put("WordNature:data/model/dependency/WordNature.txt.bin", "dependency");
-        dic.put("CRFSegment:data/model/segment/CRFSegmentModel.txt.bin", "segment");
-        dic.put("HMMSegment:data/model/segment/HMMSegmentModel.bin", "segment");
+        dic.put("CRFDependency:data/model/dependency/CRFDependencyModelMini.txt.bin", "CRFDependency");
+        dic.put("MaxEnt:data/model/dependency/MaxEntModel.txt.bin", "MaxEnt");
+        dic.put("NNParser:data/model/dependency/NNParserModel.txt.bin", "NNParser");
+        dic.put("WordNature:data/model/dependency/WordNature.txt.bin", "WordNature");
+        dic.put("CRFSegment:data/model/segment/CRFSegmentModel.txt.bin", "CRFSegment");
+        dic.put("HMMSegment:data/model/segment/HMMSegmentModel.bin", "HMMSegment");
 
         byte[] data;
         for (Object key : dic.keySet()) {
